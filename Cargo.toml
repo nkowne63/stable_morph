@@ -1,5 +1,5 @@
 [package]
-name = "stable_morph"
+name = "stable_morphing"
 version = "0.1.0"
 edition = "2021"
 
