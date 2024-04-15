@@ -37,8 +37,8 @@ pub fn apply_img2img_morphing(image_path: &str, strength: f64, output_path: &str
         "prompt": env::var("TEST_IMG2IMG_PROMPT").unwrap(),
         "negative_prompt": env::var("DEFAULT_NEGATIVE_PROMPT").unwrap(),
         "denoising_strength": strength,
-        "width": 1024,
-        "height": 1024,
+        "width": env::var("DEFAULT_WIDTH").unwrap().parse::<u32>().unwrap(),
+        "height": env::var("DEFAULT_HEIGHT").unwrap().parse::<u32>().unwrap(),
         "sampler_name": "DPM++ 2M Karras",
         "save_images": true,
         "send_images": true,
@@ -67,17 +67,21 @@ pub fn apply_img2img_morphing(image_path: &str, strength: f64, output_path: &str
     base64_to_png(base64.clone(), output_path.to_string()).unwrap();
 }
 
-pub fn morphing(strength: f64) {
-    let steps = 7;
-    let mut image_path = "test.tmp.png".to_string();
+pub fn morphing(
+    init_strength: f64,
+    final_strength: f64,
+    start_path: &str,
+    steps: u32,
+    naming: impl Fn(u32) -> String,
+) {
+    let mut image_path = start_path.to_string();
     for i in 0..steps {
-        let output_path = format!("output_{}.tmp.png", i);
-        println!("{} start", i);
-        println!("image_path: {}", image_path);
-        println!("output_path: {}", output_path);
+        let output_path = naming(i);
+        let strength =
+            init_strength + (final_strength - init_strength) / (steps as f64) * (i as f64);
         apply_img2img_morphing(&image_path, strength, &output_path);
+        println!("{} / {} done > {}", i + 1, steps, output_path);
         image_path = output_path;
-        println!("{} done", i)
     }
     println!("Morphing done");
 }
@@ -86,28 +90,43 @@ pub fn morphing(strength: f64) {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_png_to_base64() {
-        let path = "test.tmp.png";
-        println!("{}", png_to_base64(path));
-    }
+    // #[test]
+    // fn test_png_to_base64() {
+    //     let path = "test.png";
+    //     println!("{}", png_to_base64(path));
+    // }
 
     #[test]
     fn test_base64_to_png() {
-        let path = "test.tmp.png";
+        let path = "test.png";
         let base64 = png_to_base64(path);
         base64_to_png(base64, "test_output.tmp.png".to_string()).unwrap();
     }
 
     #[test]
     fn test_apply_img2img_morphing() {
-        let image_path = "test.tmp.png";
+        let image_path = "test.png";
         let strength = 0.6;
         apply_img2img_morphing(image_path, strength, "output.tmp.png");
     }
 
     #[test]
     fn test_morphing() {
-        morphing(0.5);
+        use dotenvy::dotenv;
+        dotenv().unwrap();
+        use std::env;
+        let init_num = env::var("INIT_NUM").unwrap().parse::<u32>().unwrap();
+        let init_strength = env::var("INIT_STRENGTH").unwrap().parse::<f64>().unwrap();
+        let final_strength = env::var("FINAL_STRENGTH").unwrap().parse::<f64>().unwrap();
+        let steps = env::var("STEPS").unwrap().parse::<u32>().unwrap();
+        let init_image = format!("output_{}.tmp.png", init_num);
+        let naming_format = |i: u32| format!("output_{}.tmp.png", i + init_num + 1);
+        morphing(
+            init_strength,
+            final_strength,
+            &init_image,
+            steps,
+            naming_format,
+        );
     }
 }
