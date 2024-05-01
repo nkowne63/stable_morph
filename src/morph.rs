@@ -19,12 +19,12 @@ pub fn base64_to_png(base64: String, path: String) -> ImageResult<String> {
     Ok(path)
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 struct Img2ImgResponse {
     images: Vec<String>,
 }
 
-pub fn apply_img2img_morphing(image_path: &str, strength: f64, output_path: &str) {
+pub fn apply_img2img_morphing(image_path: &str, strength: f64, output_path: &str, seed: u32) {
     use dotenvy::dotenv;
     dotenv().unwrap();
     use std::env;
@@ -39,10 +39,10 @@ pub fn apply_img2img_morphing(image_path: &str, strength: f64, output_path: &str
         "denoising_strength": strength,
         "width": env::var("DEFAULT_WIDTH").unwrap().parse::<u32>().unwrap(),
         "height": env::var("DEFAULT_HEIGHT").unwrap().parse::<u32>().unwrap(),
-        "sampler_name": "DPM++ 2M Karras",
         "save_images": true,
         "send_images": true,
-        "steps": 20
+        "steps": 20,
+        "seed": seed
     });
     let length = json.to_string().len();
     let request = client
@@ -79,7 +79,7 @@ pub fn morphing(
         let output_path = naming(i);
         let strength =
             init_strength + (final_strength - init_strength) / (steps as f64) * (i as f64);
-        apply_img2img_morphing(&image_path, strength, &output_path);
+        apply_img2img_morphing(&image_path, strength, &output_path, 100);
         println!("{} / {} done > {}", i + 1, steps, output_path);
         image_path = output_path;
     }
@@ -90,11 +90,12 @@ pub fn morphing(
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn test_png_to_base64() {
-    //     let path = "test.png";
-    //     println!("{}", png_to_base64(path));
-    // }
+    #[test]
+    fn test_png_to_base64() {
+        let path = "test.png";
+        png_to_base64(path);
+        // println!("{}", png_to_base64(path));
+    }
 
     #[test]
     fn test_base64_to_png() {
@@ -106,8 +107,8 @@ mod tests {
     #[test]
     fn test_apply_img2img_morphing() {
         let image_path = "test.png";
-        let strength = 0.6;
-        apply_img2img_morphing(image_path, strength, "output.tmp.png");
+        let strength = 0.8;
+        apply_img2img_morphing(image_path, strength, "output.tmp.png", 100);
     }
 
     #[test]

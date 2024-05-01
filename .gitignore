@@ -20,6 +20,7 @@ Cargo.lock
 
 # temporary files
 *.tmp.*
+*Zone.Identifier
 
 # env variables for test
 .env
