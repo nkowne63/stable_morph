@@ -29,7 +29,7 @@ pub struct SdwebClientInfo {
 }
 
 pub struct SdwebClient {
-    pub client: reqwest::Client,
+    pub client: Client,
     pub info: SdwebClientInfo,
 }
 
