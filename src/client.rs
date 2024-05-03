@@ -29,7 +29,7 @@ pub struct SdwebClient {
 }
 
 #[derive(serde::Deserialize, Debug)]
-pub struct Img2ImgResponse {
+pub struct ImagesResponse {
     pub images: Vec<String>,
 }
 
@@ -59,7 +59,7 @@ impl SdwebClient {
     pub async fn img2img(
         &self,
         img2img: &Img2ImgRequest,
-    ) -> Result<Img2ImgResponse, reqwest::Error> {
+    ) -> Result<ImagesResponse, reqwest::Error> {
         let url = format!("{}/sdapi/v1/img2img", self.info.basepath);
         let json = serde_json::json!({
             "init_images": img2img.init_images,
@@ -74,13 +74,13 @@ impl SdwebClient {
         });
         let request = self.post_client(url, json);
         let response = request.send().await?;
-        let response: Img2ImgResponse = response.json().await?;
+        let response: ImagesResponse = response.json().await?;
         Ok(response)
     }
     pub async fn txt2img(
         &self,
         txt2img: &Txt2ImgRequest,
-    ) -> Result<Img2ImgResponse, reqwest::Error> {
+    ) -> Result<ImagesResponse, reqwest::Error> {
         let url = format!("{}/sdapi/v1/txt2img", self.info.basepath);
         let json = serde_json::json!({
             "prompt": txt2img.prompt,
@@ -91,7 +91,7 @@ impl SdwebClient {
         });
         let request = self.post_client(url, json);
         let response = request.send().await?;
-        let response: Img2ImgResponse = response.json().await?;
+        let response: ImagesResponse = response.json().await?;
         Ok(response)
     }
 }
