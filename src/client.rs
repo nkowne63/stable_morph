@@ -1,5 +1,6 @@
 use once_cell::sync::Lazy;
-use serde_json::Value;
+use reqwest::{Client, Error, RequestBuilder};
+use serde_json::{json, Value};
 
 pub struct Txt2ImgRequest {
     pub prompt: String,
@@ -38,11 +39,11 @@ pub struct ImagesResponse {
 
 impl SdwebClient {
     pub fn new(info: SdwebClientInfo) -> Self {
-        let client = reqwest::Client::new();
+        let client = Client::new();
         Self { client, info }
     }
 
-    fn post_client(&self, url: String, json: Value) -> reqwest::RequestBuilder {
+    fn post_client(&self, url: String, json: Value) -> RequestBuilder {
         let length = json.to_string().len();
         let mut request = self
             .client
@@ -59,12 +60,9 @@ impl SdwebClient {
         request
     }
 
-    pub async fn img2img(
-        &self,
-        img2img: &Img2ImgRequest,
-    ) -> Result<ImagesResponse, reqwest::Error> {
+    pub async fn img2img(&self, img2img: &Img2ImgRequest) -> Result<ImagesResponse, Error> {
         let url = format!("{}/sdapi/v1/img2img", self.info.basepath);
-        let json = serde_json::json!({
+        let json = json!({
             "init_images": img2img.init_images,
             "prompt": img2img.prompt,
             "negative_prompt": img2img.negative_prompt,
@@ -80,12 +78,9 @@ impl SdwebClient {
         let response: ImagesResponse = response.json().await?;
         Ok(response)
     }
-    pub async fn txt2img(
-        &self,
-        txt2img: &Txt2ImgRequest,
-    ) -> Result<ImagesResponse, reqwest::Error> {
+    pub async fn txt2img(&self, txt2img: &Txt2ImgRequest) -> Result<ImagesResponse, Error> {
         let url = format!("{}/sdapi/v1/txt2img", self.info.basepath);
-        let json = serde_json::json!({
+        let json = json!({
             "prompt": txt2img.prompt,
             "negative_prompt": txt2img.negative_prompt,
             "width": txt2img.width,
@@ -101,11 +96,12 @@ impl SdwebClient {
 
 pub static SD_WEB_ENV: Lazy<SdwebClientInfo> = Lazy::new(|| {
     use dotenvy::dotenv;
+    use std::env::var;
     dotenv().unwrap();
     SdwebClientInfo {
-        basepath: std::env::var("SDWEBUI_ENDPOINT").unwrap(),
-        cf_access_client_id: std::env::var("CF_ACCESS_CLIENT_ID").ok(),
-        cf_access_client_secret: std::env::var("CF_ACCESS_CLIENT_SECRET").ok(),
-        host: std::env::var("HOST").unwrap(),
+        basepath: var("SDWEBUI_ENDPOINT").unwrap(),
+        cf_access_client_id: var("CF_ACCESS_CLIENT_ID").ok(),
+        cf_access_client_secret: var("CF_ACCESS_CLIENT_SECRET").ok(),
+        host: var("HOST").unwrap(),
     }
 });
