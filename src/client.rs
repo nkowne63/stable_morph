@@ -1,3 +1,6 @@
+use once_cell::sync::Lazy;
+use serde_json::Value;
+
 pub struct Txt2ImgRequest {
     pub prompt: String,
     pub negative_prompt: String,
@@ -95,9 +98,6 @@ impl SdwebClient {
         Ok(response)
     }
 }
-
-use once_cell::sync::Lazy;
-use serde_json::Value;
 
 pub static SD_WEB_ENV: Lazy<SdwebClientInfo> = Lazy::new(|| {
     use dotenvy::dotenv;
