@@ -1,5 +1,6 @@
 use once_cell::sync::Lazy;
 use reqwest::{Client, Error, RequestBuilder};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 pub struct Txt2ImgRequest {
@@ -32,7 +33,7 @@ pub struct SdwebClient {
     pub info: SdwebClientInfo,
 }
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct ImagesResponse {
     pub images: Vec<String>,
 }
