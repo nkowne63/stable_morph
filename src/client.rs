@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use reqwest::{Client, Error, RequestBuilder};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 pub struct Txt2ImgRequest {
@@ -21,6 +21,7 @@ pub struct Img2ImgRequest {
     pub seed: Option<u32>,
 }
 
+#[derive(Serialize)]
 pub struct SdwebClientInfo {
     pub basepath: String,
     pub cf_access_client_id: Option<String>,
