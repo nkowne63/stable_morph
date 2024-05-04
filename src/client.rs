@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use reqwest::{Client, Error, RequestBuilder};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 pub struct Txt2ImgRequest {
@@ -21,7 +21,7 @@ pub struct Img2ImgRequest {
     pub seed: Option<u32>,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Clone)]
 pub struct SdwebClientInfo {
     pub basepath: String,
     pub cf_access_client_id: Option<String>,
@@ -29,6 +29,7 @@ pub struct SdwebClientInfo {
     pub host: String,
 }
 
+#[derive(Clone)]
 pub struct SdwebClient {
     pub client: Client,
     pub info: SdwebClientInfo,
@@ -62,7 +63,7 @@ impl SdwebClient {
         request
     }
 
-    pub async fn img2img(&self, img2img: &Img2ImgRequest) -> Result<ImagesResponse, Error> {
+    pub async fn img2img(&self, img2img: Img2ImgRequest) -> Result<ImagesResponse, Error> {
         let url = format!("{}/sdapi/v1/img2img", self.info.basepath);
         let json = json!({
             "init_images": img2img.init_images,
@@ -73,21 +74,23 @@ impl SdwebClient {
             "height": img2img.height,
             "save_images": true,
             "send_images": true,
-            "seed": img2img.seed
+            "seed": img2img.seed,
+            "steps": 20
         });
         let request = self.post_client(url, json);
         let response = request.send().await?;
-        let response: ImagesResponse = response.json().await?;
+        let text = response.text().await;
+        let response: ImagesResponse = serde_json::from_str(&text.unwrap()).unwrap();
         Ok(response)
     }
-    pub async fn txt2img(&self, txt2img: &Txt2ImgRequest) -> Result<ImagesResponse, Error> {
+    pub async fn txt2img(&self, txt2img: Txt2ImgRequest) -> Result<ImagesResponse, Error> {
         let url = format!("{}/sdapi/v1/txt2img", self.info.basepath);
         let json = json!({
             "prompt": txt2img.prompt,
             "negative_prompt": txt2img.negative_prompt,
             "width": txt2img.width,
             "height": txt2img.height,
-            "seed": txt2img.seed
+            "seed": txt2img.seed,
         });
         let request = self.post_client(url, json);
         let response = request.send().await?;
